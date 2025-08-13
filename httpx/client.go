@@ -2,7 +2,11 @@ package httpx
 
 import (
 	"crypto/tls"
+	"fmt"
+	"github.com/chainreactors/proxyclient"
 	"github.com/valyala/fasthttp"
+	"net"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -26,8 +30,6 @@ type Client struct {
 
 	// 加个锁
 	clock *sync.Mutex
-
-	// TODO: http/socks5等代理支持
 }
 
 // NewClient 使用默认配置创建 Client
@@ -201,5 +203,55 @@ func (cli *Client) SetDial(f fasthttp.DialFunc) *Client {
 	cli.clock.Lock()
 	defer cli.clock.Unlock()
 	cli.Dial = f
+	return cli
+}
+
+// SetProxy 设置请求代理，采用 github.com/chainreactors/proxyclient 库作为代理支持
+// 因此 proxyclient 库支持的协议应该都支持，如 HTTP/HTTPS/SOCKS5 等
+func (cli *Client) SetProxy(proxy string) *Client {
+	cli.clock.Lock()
+	defer cli.clock.Unlock()
+
+	proxyURL, err := url.Parse(proxy)
+	if err != nil {
+		panic(fmt.Errorf("invalid proxy url: %s", proxy))
+	}
+
+	dial, err := proxyclient.NewClient(proxyURL)
+	if err != nil {
+		panic(fmt.Errorf("create client failed: %s", err))
+	}
+
+	cli.Dial = func(addr string) (net.Conn, error) {
+		return dial.Dial("tcp", addr)
+	}
+
+	return cli
+}
+
+// SetProxies 设置请求代理池，采用 github.com/chainreactors/proxyclient 库作为代理支持
+// 因此 proxyclient 库支持的协议应该都支持，如 HTTP/HTTPS/SOCKS5 等
+func (cli *Client) SetProxies(proxies []string) *Client {
+	cli.clock.Lock()
+	defer cli.clock.Unlock()
+
+	var proxyUrls []*url.URL
+	for _, proxy := range proxies {
+		proxyURL, err := url.Parse(proxy)
+		if err != nil {
+			panic(fmt.Errorf("invalid proxy url: %s", proxy))
+		}
+		proxyUrls = append(proxyUrls, proxyURL)
+	}
+
+	dialer, err := proxyclient.NewClientChain(proxyUrls)
+	if err != nil {
+		panic(fmt.Errorf("create client failed: %s", err))
+	}
+
+	cli.Dial = func(addr string) (net.Conn, error) {
+		return dialer.Dial("tcp", addr)
+	}
+
 	return cli
 }

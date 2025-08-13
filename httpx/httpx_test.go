@@ -99,3 +99,33 @@ func TestRequest(t *testing.T) {
 	t.Log(req)
 	t.Log(resp)
 }
+
+func TestProxy(t *testing.T) {
+	//req := NewClient().SetProxy("socks5://127.0.0.1:8083").R()
+	req := NewClient().SetProxies([]string{
+		"socks5://127.0.0.1:8083",
+		"http://127.0.0.1:8083",
+	}).R()
+	resp, err := req.Get("https://www.baidu.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(resp.Status(), resp.respSize)
+	t.Log(resp.BodyString())
+}
+
+func TestRedirect(t *testing.T) {
+	resp, err := NewClient().R().
+		SetUserAgent(ChromeUserAgent).
+		AllowRedirect().
+		AllowSaveResponseHistory().
+		Get("http://127.0.0.1:8081")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, response := range resp.ResponseHistory() {
+		t.Log(response)
+	}
+}

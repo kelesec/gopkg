@@ -28,14 +28,21 @@ type Request struct {
 	OriginalRequest fasthttp.Request       // 原始请求的数据备份
 	client          *Client
 
+	allowRedirect            bool // 设置允许重定向、默认 false，也即不进行重定向请求
+	allowSaveResponseHistory bool // 不保存重定向请求历史响应信息
+	maxRedirectsCount        int  // 最大重定向请求次数，默认为5
+
 	// 加个锁
 	clock *sync.Mutex
 }
 
 func newRequest(client *Client) *Request {
 	return &Request{
-		client: client,
-		clock:  &sync.Mutex{},
+		client:                   client,
+		clock:                    &sync.Mutex{},
+		allowRedirect:            false,
+		allowSaveResponseHistory: false,
+		maxRedirectsCount:        5,
 	}
 }
 
@@ -166,12 +173,56 @@ func (r *Request) Do(url, method string) (*Response, error) {
 		return nil, fmt.Errorf("preCheck err: %v", err)
 	}
 
-	err := r.client.execute(req, resp)
-	if err != nil {
-		return nil, fmt.Errorf("get %s err: %v", r.url, err)
+	redirectCount := 0
+	finalResp := new(Response)
+	respHistory := make([]*Response, 0)
+
+	for {
+		err := r.client.execute(req, resp)
+		if err != nil {
+			return nil, fmt.Errorf("get %s err: %v", r.url, err)
+		}
+
+		// 不允许重定向时直接退出
+		if !r.allowRedirect {
+			return r.postCheck(resp), nil
+		}
+
+		// 非重定向请求直接退出循环
+		statusCode := resp.Header.StatusCode()
+		if !fasthttp.StatusCodeIsRedirect(statusCode) {
+			finalResp = r.postCheck(resp)
+			respHistory = append(respHistory, finalResp)
+			if len(respHistory) != 0 {
+				finalResp.responseHistory = respHistory
+			}
+			break
+		}
+
+		// 超过最大重定向请求次数支持
+		redirectCount++
+		if redirectCount > r.maxRedirectsCount {
+			return nil, fasthttp.ErrTooManyRedirects
+		}
+
+		tmpResp := r.postCheck(resp)
+		if tmpResp.Location() == "" {
+			return nil, fasthttp.ErrMissingLocation
+		}
+
+		// 保存历史请求
+		if r.allowSaveResponseHistory {
+			respHistory = append(respHistory, tmpResp)
+		}
+
+		// 继续重定向
+		if string(req.Header.Method()) == "POST" && (statusCode == 301 || statusCode == 302) {
+			req.Header.SetMethod(MethodGet)
+		}
+		req.SetRequestURI(tmpResp.location)
 	}
 
-	return r.postCheck(resp), nil
+	return finalResp, nil
 }
 
 func (r *Request) Get(url string) (*Response, error) {
@@ -382,6 +433,30 @@ func (r *Request) SetBasicAuth(username, password string) *Request {
 	}
 	r.BasicAuth.Username = username
 	r.BasicAuth.Password = password
+	return r
+}
+
+// AllowRedirect 允许重定向
+func (r *Request) AllowRedirect() *Request {
+	r.clock.Lock()
+	defer r.clock.Unlock()
+	r.allowRedirect = true
+	return r
+}
+
+// AllowSaveResponseHistory 允许保存重定向历史响应记录
+func (r *Request) AllowSaveResponseHistory() *Request {
+	r.clock.Lock()
+	defer r.clock.Unlock()
+	r.allowSaveResponseHistory = true
+	return r
+}
+
+// SetMaxRedirectsCount 设置最大重定向请求次数支持
+func (r *Request) SetMaxRedirectsCount(max int) *Request {
+	r.clock.Lock()
+	defer r.clock.Unlock()
+	r.maxRedirectsCount = max
 	return r
 }
 

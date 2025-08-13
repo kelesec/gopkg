@@ -14,12 +14,13 @@ type Response struct {
 	OriginalRequest  fasthttp.Request
 	OriginalResponse fasthttp.Response
 
-	header        Header // 响应头
-	headerBytes   []byte // 响应头字节
-	body          []byte // 响应体
-	contentLength int    // 响应体长度
-	respSize      int    // 响应长度（响应头+响应体）
-	location      string // 30X跳转后的地址
+	header          Header      // 响应头
+	headerBytes     []byte      // 响应头字节
+	body            []byte      // 响应体
+	contentLength   int         // 响应体长度
+	respSize        int         // 响应长度（响应头+响应体）
+	location        string      // 30X跳转后的地址
+	responseHistory []*Response // 允许重定向跳转时，记录每次请求的响应，包括最后一次请求也会记录
 }
 
 func (r *Response) Status() int {
@@ -56,6 +57,10 @@ func (r *Response) ResponseSize() int {
 
 func (r *Response) Location() string {
 	return r.location
+}
+
+func (r *Response) ResponseHistory() []*Response {
+	return r.responseHistory
 }
 
 func (r *Response) String() string {
