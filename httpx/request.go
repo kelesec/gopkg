@@ -43,6 +43,7 @@ func newRequest(client *Client) *Request {
 		allowRedirect:            false,
 		allowSaveResponseHistory: false,
 		maxRedirectsCount:        5,
+		QueryParam:               _url.Values{},
 	}
 }
 
