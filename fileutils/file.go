@@ -27,22 +27,13 @@ func GetFilePerm(filename string) (fs.FileMode, error) {
 
 // Read 读取全部文件内容，并返回字节数组
 func Read(filename string) ([]byte, error) {
-	bytes, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("fileutils::ReadFile: read file %s error: %v", filename, err)
-	}
-
-	return bytes, nil
+	return os.ReadFile(filename)
 }
 
 // ReadString 读取全部文件内容，并返回 String 类型
 func ReadString(filename string) (string, error) {
 	bytes, err := Read(filename)
-	if err != nil {
-		return "", fmt.Errorf("fileutils::ReadString: %v", err)
-	}
-
-	return string(bytes), nil
+	return string(bytes), err
 }
 
 // ReadLines 读取全部文件内容，并返回字符串数组（一行一个数组元素）
