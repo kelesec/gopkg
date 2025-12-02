@@ -3,7 +3,7 @@ package httpx
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/chainreactors/proxyclient"
+	"github.com/kelesec/proxyclient"
 	"github.com/valyala/fasthttp"
 	"net"
 	"net/url"

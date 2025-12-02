@@ -101,11 +101,11 @@ func TestRequest(t *testing.T) {
 }
 
 func TestProxy(t *testing.T) {
-	//req := NewClient().SetProxy("socks5://127.0.0.1:8083").R()
-	req := NewClient().SetProxies([]string{
-		"socks5://127.0.0.1:8083",
-		"http://127.0.0.1:8083",
-	}).R()
+	req := NewClient().SetProxy("http://8.147.118.237:18920").R()
+	//req := NewClient().SetProxies([]string{
+	//	"socks5://127.0.0.1:8083",
+	//	"http://127.0.0.1:8083",
+	//}).R()
 	resp, err := req.Get("https://www.baidu.com")
 	if err != nil {
 		t.Fatal(err)

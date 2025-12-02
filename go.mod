@@ -3,8 +3,8 @@ module github.com/kelesec/gopkg
 go 1.25.0
 
 require (
-	github.com/chainreactors/proxyclient v1.0.3
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/kelesec/proxyclient v1.0.5
 	github.com/projectdiscovery/mapcidr v1.1.97
 	github.com/valyala/fasthttp v1.68.0
 	github.com/xuri/excelize/v2 v2.10.0
@@ -33,5 +33,3 @@ require (
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 )
-
-replace github.com/chainreactors/proxyclient => github.com/kelesec/proxyclient v1.0.4
