@@ -6,8 +6,10 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/kelesec/proxyclient v1.0.5
 	github.com/projectdiscovery/mapcidr v1.1.97
+	github.com/rs/zerolog v1.34.0
 	github.com/valyala/fasthttp v1.68.0
 	github.com/xuri/excelize/v2 v2.10.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (
@@ -15,6 +17,8 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/klauspost/compress v1.18.1 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
